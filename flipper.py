@@ -202,25 +202,9 @@ def get_best_quote(quotes: list, side: str = "long") -> dict:
 
 # ─── Portfolio ───────────────────────────────────────────────────────────────
 
-def get_portfolio(rpc: TRPCClient) -> dict:
+def get_portfolio(rpc: TRPCClient, pubkey: str) -> dict:
     """Get user portfolio from perps API."""
-    return rpc.query("user.portfolio")
-
-
-def deposit_collateral(rpc: TRPCClient, pubkey: str, amount: float) -> str:
-    """Deposit SOL as collateral for perps trading."""
-    result = rpc.mutate("collateral.deposit", {
-        "walletAddress": pubkey,
-        "amount": int(amount * 1e9)  # lamports
-    })
-    # API might return a serialized transaction
-    tx_data = result.get("result", {}).get("data", {}).get("json", {})
-    if "transaction" in tx_data:
-        tx_bytes = base64.b64decode(tx_data["transaction"])
-        # Sign and send
-        # Note: in practice, decode the transaction, sign with keypair, send
-        return tx_data.get("signature", "pending")
-    return tx_data.get("signature", "")
+    return rpc.query("portfolio.get", {"walletAddress": pubkey})
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -295,7 +279,7 @@ def cmd_quotes(market: str):
 
 
 def cmd_open(market: str, side: str, size_usd: float, leverage: float):
-    """Open a perps position."""
+    """Show what opening a position would look like."""
     kp, pubkey = load_wallet()
     rpc = TRPCClient(FLIPPER_API)
     jwt = authenticate(rpc, kp, pubkey)
@@ -312,22 +296,9 @@ def cmd_open(market: str, side: str, size_usd: float, leverage: float):
     print(f"  Best route: {best['dexId']}")
     print(f"  Est. entry: ${best['quote']['askPrice' if side == 'long' else 'bidPrice']:.4f}")
     print(f"{'─' * 50}")
-
-    # Execute order (mutation)
-    result = rpc.mutate("order.execute", {
-        "market": market.upper(),
-        "side": side,
-        "sizeUsd": size_usd,
-        "leverage": leverage,
-        "dexId": best["dexId"],
-        "reduceOnly": False
-    })
-
-    order = result.get("result", {}).get("data", {}).get("json", {})
-    print(f"\n✅ Order placed!")
-    print(f"   Status: {order.get('status', 'submitted')}")
-    print(f"   Ref: {str(order.get('id', ''))[:20]}...")
-    print(f"   TX: {order.get('signature', 'pending')[:20]}...")
+    print(f"\n⚠️  Perps trading needs on-chain Solana tx. Open the perps app:")
+    print(f"   https://app.flpp.io/perps-testnet")
+    print(f"   Or use Jupiter/Flash SDK directly.")
     print()
 
 
@@ -338,7 +309,7 @@ def cmd_portfolio():
     jwt = authenticate(rpc, kp, pubkey)
 
     try:
-        portfolio = rpc.query("user.portfolio")
+        portfolio = rpc.query("portfolio.get", {"walletAddress": pubkey})
         data = portfolio.get("result", {}).get("data", {}).get("json", {})
 
         equity = data.get("equity", 0)
@@ -426,14 +397,9 @@ def cmd_farm():
 
 
 def cmd_deposit(amount: float):
-    """Deposit SOL as collateral."""
-    kp, pubkey = load_wallet()
-    rpc = TRPCClient(FLIPPER_API)
-    jwt = authenticate(rpc, kp, pubkey)
-
-    print(f"\n💰 Depositing {amount} SOL as collateral...")
-    result = deposit_collateral(rpc, pubkey, amount)
-    print(f"   Result: {result}")
+    """Show deposit instructions."""
+    print(f"\n💰 Deposit {amount} SOL as collateral via Solana devnet on-chain tx.")
+    print(f"   Use the perps testnet app: https://app.flpp.io/perps-testnet")
     print()
 
 

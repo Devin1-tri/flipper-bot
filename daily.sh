@@ -26,26 +26,25 @@ echo "════════════════════════�
 
 # ── STEP 1: Balance Check ──
 echo ""
-echo "[1/5] 📊 Balance check..."
+echo "[1/4] 📊 Balance check..."
 python3 flipper.py balance
 
-# ── STEP 2: Farm (auth + scan + portfolio) ──
+# ── STEP 2: Portfolio Check ──
 echo ""
-echo "[2/5] 🌾 Farm check..."
-python3 flipper.py farm
-
-# ── STEP 3: Daily Trade (open + close) ──
-echo ""
-echo "[3/5] 💹 Daily Trade — opening SOL-PERP long..."
-python3 flipper.py open SOL-PERP long 10 1
-
-echo ""
-echo "[3b/5] Closing position..."
+echo "[2/4] 📋 Portfolio check..."
 python3 flipper.py portfolio
+
+# ── STEP 3: Market Quotes Scan ──
+echo ""
+echo "[3/4] 📊 Market quotes scan..."
+echo "  SOL-PERP:"
+python3 flipper.py quotes SOL-PERP
+echo "  BTC-PERP:"
+python3 flipper.py quotes BTC-PERP
 
 # ── STEP 4: Track Streak ──
 echo ""
-echo "[4/5] 📅 Streak tracker..."
+echo "[4/4] 📅 Streak tracker..."
 if [ -f "$STREAK_FILE" ]; then
     LAST_DATE=$(cat "$STREAK_FILE")
     DIFF=$(( ( $(date -d "$DATE" +%s) - $(date -d "$LAST_DATE" +%s) ) / 86400 ))
@@ -61,9 +60,9 @@ else
 fi
 echo "$DATE" > "$STREAK_FILE"
 
-# ── STEP 5: Summary ──
 echo ""
-echo "[5/5] ✅ Daily farming complete!"
+echo "══════════════════════════════════════════════"
+echo "  ✅ Daily farming complete!"
 echo "  Time: $(date)"
 echo "  Log: $LOG_FILE"
 echo "══════════════════════════════════════════════"
