@@ -107,7 +107,7 @@ $ python flipper.py quotes SOL-PERP
 
 ```bash
 # Clone
-git clone https://github.com/rizvan/flipper-bot
+git clone https://github.com/Devin1-tri/flipper-bot
 cd flipper-bot
 
 # Install
